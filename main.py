@@ -13,13 +13,18 @@ app = FastAPI(
     version     = "1.0.0"
 )
 
-# CORS — allow React frontend to call this backend
+# CORS — allow React frontend and mobile app to call this backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-    "http://localhost:3000",
-    "https://image-crypto-analyzer.vercel.app"
-],
+        "https://image-crypto-analyzer.vercel.app",
+        "capacitor://localhost",
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "null",
+        "*"
+    ],
     allow_credentials =True,
     allow_methods     = ["*"],
     allow_headers     = ["*"]

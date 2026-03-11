@@ -21,6 +21,7 @@ class OTPResend(BaseModel):
 
 class UserResponse(BaseModel):
     id: str
+    uuid: Optional[str] = None  # UUID for image embedding
     username: str
     email: str
     role: str

@@ -100,6 +100,7 @@ async def login(data: dict, request: Request):
         "token_type"  : "bearer",
         "user"        : {
             "id"      : user["id"],
+            "uuid"    : user["id"],  # UUID for image embedding
             "username": user["username"],
             "email"   : user["email"],
             "role"    : user["role"]
@@ -135,6 +136,7 @@ async def admin_login(data: dict, request: Request):
         "token_type"  : "bearer",
         "user"        : {
             "id"      : user["id"],
+            "uuid"    : user["id"],  # UUID for image embedding
             "username": user["username"],
             "email"   : user["email"],
             "role"    : user["role"]
@@ -446,6 +448,7 @@ async def webauthn_login_finish(data: WebAuthnLoginFinish, request: Request):
             "token_type"  : "bearer",
             "user"        : {
                 "id"      : user["id"],
+                "uuid"    : user["id"],  # UUID for image embedding
                 "username": user["username"],
                 "email"   : user["email"],
                 "role"    : user["role"]

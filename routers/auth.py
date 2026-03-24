@@ -11,7 +11,7 @@ from utils.auth_helpers import (
     generate_jwt, generate_otp,
     get_current_user, log_action
 )
-from utils.email_helper import send_otp_email, send_new_device_email
+from utils.email_helper import send_otp_email, send_new_device_email, send_username_email, send_forgot_password_email
 import os
 import json
 
@@ -62,7 +62,17 @@ async def register(data: UserRegister, request: Request):
         "used"      : False
     }).execute()
 
-    send_otp_email(data.email, otp_code, data.username)
+    # ✅ FIX: Check if email was actually sent — raise error if not
+    email_sent = send_otp_email(data.email, otp_code, data.username)
+    if not email_sent:
+        # Roll back: delete the user and OTP so they can try again cleanly
+        db.table("otp_codes").delete().eq("email", data.email).eq("code", otp_code).execute()
+        db.table("users").delete().eq("id", user["id"]).execute()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send OTP email. Please check your email address and try registering again."
+        )
+
     log_action(user["id"], "register", {"email": data.email}, str(request.client.host))
 
     return {
@@ -202,7 +212,9 @@ async def resend_otp(data: OTPResend):
         "used"      : False
     }).execute()
 
-    send_otp_email(data.email, otp_code, user["username"])
+    email_sent = send_otp_email(data.email, otp_code, user["username"])
+    if not email_sent:
+        raise HTTPException(status_code=500, detail="Failed to send OTP email. Please try again.")
     return {"message": "New OTP sent to your email"}
 
 
@@ -211,6 +223,109 @@ async def resend_otp(data: OTPResend):
 @router.get("/me")
 async def get_me(current_user=Depends(get_current_user)):
     return current_user
+
+
+
+# ── Forgot Password: Step 1 — Request OTP ─────────────────────────────────────────────
+
+@router.post("/forgot-password/request")
+async def forgot_password_request(data: dict):
+    db    = get_admin_db()
+    email = data.get("email", "").lower().strip()
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    user_result = db.table("users").select("*").eq("email", email).execute()
+    if not user_result.data:
+        raise HTTPException(status_code=404, detail="Email is not registered")
+
+    user       = user_result.data[0]
+    otp_code   = generate_otp()
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
+
+    db.table("otp_codes").insert({
+        "email"     : email,
+        "code"      : otp_code,
+        "expires_at": expires_at.isoformat(),
+        "used"      : False
+    }).execute()
+
+    email_sent = send_forgot_password_email(email, otp_code, user["username"])
+    if not email_sent:
+        raise HTTPException(status_code=500, detail="Failed to send reset email. Please try again.")
+
+    return {"message": "Verification code sent to your email"}
+
+
+# ── Forgot Password: Step 2 — Verify OTP + Reset Password ────────────────────────
+
+@router.post("/forgot-password/reset")
+async def forgot_password_reset(data: dict):
+    db           = get_admin_db()
+    email        = data.get("email", "").lower().strip()
+    otp          = data.get("otp", "").strip()
+    new_password = data.get("new_password", "")
+
+    if not email or not otp or not new_password:
+        raise HTTPException(status_code=400, detail="Email, OTP and new password are required")
+
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    user_result = db.table("users").select("*").eq("email", email).execute()
+    if not user_result.data:
+        raise HTTPException(status_code=404, detail="Email is not registered")
+
+    user = user_result.data[0]
+
+    otp_result = db.table("otp_codes") \
+        .select("*") \
+        .eq("email", email) \
+        .eq("code", otp) \
+        .eq("used", False) \
+        .execute()
+
+    if not otp_result.data:
+        raise HTTPException(status_code=400, detail="Invalid OTP code")
+
+    otp_row    = otp_result.data[0]
+    expires_at = datetime.fromisoformat(otp_row["expires_at"].replace("Z", "+00:00"))
+
+    if datetime.utcnow().replace(tzinfo=expires_at.tzinfo) > expires_at:
+        raise HTTPException(status_code=400, detail="OTP expired. Please request a new one.")
+
+    stored_pwd = user.get("password_hash", "")
+    if stored_pwd and pwd_context.verify(new_password, stored_pwd):
+        raise HTTPException(status_code=400, detail="New password must be different from your current password")
+
+    db.table("otp_codes").update({"used": True}).eq("id", otp_row["id"]).execute()
+    db.table("users").update({"password_hash": pwd_context.hash(new_password)}).eq("email", email).execute()
+
+    return {"message": "Password reset successfully"}
+
+
+# ── Forgot Username — Send username to registered email ──────────────────────────
+
+@router.post("/forgot-username")
+async def forgot_username(data: dict):
+    db    = get_admin_db()
+    email = data.get("email", "").lower().strip()
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    user_result = db.table("users").select("*").eq("email", email).execute()
+    if not user_result.data:
+        raise HTTPException(status_code=404, detail="Email is not registered")
+
+    user = user_result.data[0]
+
+    email_sent = send_username_email(email, user["username"])
+    if not email_sent:
+        raise HTTPException(status_code=500, detail="Failed to send email. Please try again.")
+
+    return {"message": "Username sent to your email"}
 
 
 # ── WebAuthn Register Start ───────────────────────────────────────────────────

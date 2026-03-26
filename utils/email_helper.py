@@ -164,3 +164,51 @@ def send_forgot_password_email(to_email: str, otp_code: str, username: str) -> b
     except Exception as e:
         print(f"❌ Email send error (forgot password): {e}")
         return False
+
+
+def send_password_reset_link_email(to_email: str, username: str, reset_link: str) -> bool:
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "PINIT — Reset Your Password"
+        msg["From"]    = EMAIL_USER
+        msg["To"]      = to_email
+        html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+            <div style="background: #1a1a2e; padding: 30px; border-radius: 12px;">
+                <h2 style="color: #667eea; margin: 0 0 10px;">PINIT</h2>
+                <p style="color: #ccc; font-size: 14px;">Image Verification Platform</p>
+            </div>
+            <div style="padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px;">
+                <h3>Hi {username},</h3>
+                <p>We received a request to reset your password. Click the button below:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{reset_link}"
+                       style="background: linear-gradient(135deg, #667eea, #764ba2);
+                              color: white; padding: 14px 32px; border-radius: 8px;
+                              text-decoration: none; font-size: 16px; font-weight: 600;
+                              display: inline-block;">
+                        Reset My Password
+                    </a>
+                </div>
+                <p style="color: #666; font-size: 13px;">
+                    This link expires in <strong>30 minutes</strong>.<br>
+                    If you did not request a password reset, ignore this email —
+                    your password will remain unchanged.
+                </p>
+                <p style="color: #999; font-size: 12px; word-break: break-all;">
+                    Or copy this link: {reset_link}
+                </p>
+            </div>
+        </body>
+        </html>"""
+        msg.attach(MIMEText(html, "html"))
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
+            server.starttls()
+            server.login(EMAIL_USER, EMAIL_PASS)
+            server.sendmail(EMAIL_USER, to_email, msg.as_string())
+        print(f"✅ Password reset link sent to {to_email}")
+        return True
+    except Exception as e:
+        print(f"❌ Email send error (reset link): {e}")
+        return False

@@ -44,9 +44,10 @@ def send_otp_email(to_email: str, otp_code: str, username: str) -> bool:
             server.starttls()
             server.login(EMAIL_USER, EMAIL_PASS)
             server.sendmail(EMAIL_USER, to_email, msg.as_string())
+        print(f"✅ OTP email sent to {to_email}")
         return True
     except Exception as e:
-        print(f"Email send error: {e}")
+        print(f"❌ Email send error: {e}")
         return False
 
 
@@ -80,9 +81,10 @@ def send_new_device_email(to_email: str, username: str, device_name: str) -> boo
             server.starttls()
             server.login(EMAIL_USER, EMAIL_PASS)
             server.sendmail(EMAIL_USER, to_email, msg.as_string())
+        print(f"✅ Device email sent to {to_email}")
         return True
     except Exception as e:
-        print(f"Email send error: {e}")
+        print(f"❌ Email send error: {e}")
         return False
 
 
@@ -107,7 +109,8 @@ def send_username_email(to_email: str, username: str) -> bool:
                             font-size: 28px; font-weight: bold; letter-spacing: 4px;
                             color: #667eea; margin: 20px 0;">{username}</div>
                 <p style="color: #666; font-size: 13px;">
-                    Use this to log in to your account.
+                    Use this to log in to your account.<br>
+                    If you did not request this, ignore this email.
                 </p>
             </div>
         </body>
@@ -117,9 +120,10 @@ def send_username_email(to_email: str, username: str) -> bool:
             server.starttls()
             server.login(EMAIL_USER, EMAIL_PASS)
             server.sendmail(EMAIL_USER, to_email, msg.as_string())
+        print(f"✅ Username email sent to {to_email}")
         return True
     except Exception as e:
-        print(f"Email send error (username): {e}")
+        print(f"❌ Email send error (username): {e}")
         return False
 
 
@@ -144,7 +148,8 @@ def send_forgot_password_email(to_email: str, otp_code: str, username: str) -> b
                             font-size: 36px; font-weight: bold; letter-spacing: 8px;
                             color: #e53e3e; margin: 20px 0;">{otp_code}</div>
                 <p style="color: #666; font-size: 13px;">
-                    Expires in <strong>10 minutes</strong>.
+                    Expires in <strong>10 minutes</strong>.<br>
+                    If you did not request this, ignore this email.
                 </p>
             </div>
         </body>
@@ -154,7 +159,8 @@ def send_forgot_password_email(to_email: str, otp_code: str, username: str) -> b
             server.starttls()
             server.login(EMAIL_USER, EMAIL_PASS)
             server.sendmail(EMAIL_USER, to_email, msg.as_string())
+        print(f"✅ Password reset email sent to {to_email}")
         return True
     except Exception as e:
-        print(f"Email send error (forgot password): {e}")
+        print(f"❌ Email send error (forgot password): {e}")
         return False

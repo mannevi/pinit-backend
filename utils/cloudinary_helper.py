@@ -121,3 +121,49 @@ def get_thumbnail_url(asset_id: str) -> str:
         fetch_format = "auto",
         secure       = True
     )
+
+
+# ── Original file storage (no transformation — used for forensic comparison) ──
+
+ORIGINAL_FOLDER = os.getenv("CLOUDINARY_ORIGINAL_FOLDER", "pinit-originals")
+
+
+def upload_original(file_bytes: bytes, asset_id: str) -> dict:
+    """
+    Upload the original image to Cloudinary with NO transformation.
+    Stored separately from thumbnails so comparison always uses the
+    uncompressed source file.
+    Returns { url, public_id, width, height }
+    """
+    try:
+        result = cloudinary.uploader.upload(
+            file_bytes,
+            public_id     = f"{ORIGINAL_FOLDER}/{asset_id}",
+            folder        = ORIGINAL_FOLDER,
+            overwrite     = True,
+            resource_type = "image"
+            # No transformation — store exactly as-is
+        )
+        return {
+            "success"   : True,
+            "url"       : result["secure_url"],
+            "public_id" : result["public_id"],
+            "width"     : result.get("width"),
+            "height"    : result.get("height"),
+        }
+    except Exception as e:
+        return {
+            "success" : False,
+            "error"   : str(e),
+            "url"     : None
+        }
+
+
+def get_original_url(asset_id: str) -> str:
+    """
+    Get the public URL for the stored original (uncompressed) file.
+    Use this as the reference image in forensic comparison — NOT the thumbnail.
+    """
+    return cloudinary.CloudinaryImage(
+        f"{ORIGINAL_FOLDER}/{asset_id}"
+    ).build_url(secure=True)

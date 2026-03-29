@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from db.database import get_admin_db
-from models.schemas import VaultImageCreate, VaultImageResponse
+from models.schemas import VaultImageCreate, VaultImageResponse, VisualSearchRequest
 from utils.auth_helpers import get_current_user, log_action
 from utils.cloudinary_helper import upload_thumbnail_base64, delete_thumbnail
 
@@ -139,3 +139,64 @@ async def search_vault(q: str, current_user=Depends(get_current_user)):
         .or_(f"file_name.ilike.%{q}%,owner_name.ilike.%{q}%,asset_id.ilike.%{q}%") \
         .execute()
     return {"results": result.data}
+
+
+# ─── Visual similarity search ─────────────────────────────────────────────────
+# Called by VerifyPage when SHA-256 and UUID checks both fail.
+# Compares the uploaded image's pHash against every stored visual_fingerprint
+# and returns the top 5 most visually similar assets above the threshold.
+@router.post("/search/visual")
+async def visual_search(
+    data: VisualSearchRequest,
+    current_user=Depends(get_current_user)
+):
+    from models.schemas import VisualSearchRequest as _  # already imported via data type
+
+    db = get_admin_db()
+
+    # Fetch only the fields we need — no thumbnails in the query to keep it fast
+    result = db.table("vault_images").select(
+        "asset_id, visual_fingerprint, user_id, owner_name, owner_email, "
+        "thumbnail_url, created_at, resolution, file_hash, certificate_id"
+    ).execute()
+
+    all_assets = result.data or []
+    matches    = []
+
+    for asset in all_assets:
+        stored = asset.get("visual_fingerprint") or ""
+        if not stored or len(stored) != len(data.phash):
+            # Skip assets with no fingerprint or different algorithm (legacy vs new)
+            continue
+
+        # Hamming distance between two hex-encoded bit strings
+        try:
+            diff = sum(
+                bin(int(a, 16) ^ int(b, 16)).count("1")
+                for a, b in zip(stored, data.phash)
+            )
+        except ValueError:
+            continue
+
+        total = len(data.phash) * 4
+        sim   = round(((total - diff) / total) * 100)
+
+        if sim >= data.threshold:
+            matches.append({
+                "asset_id"      : asset["asset_id"],
+                "owner_name"    : asset["owner_name"],
+                "owner_email"   : asset["owner_email"],
+                "thumbnail_url" : asset["thumbnail_url"],
+                "created_at"    : asset["created_at"],
+                "resolution"    : asset["resolution"],
+                "file_hash"     : asset["file_hash"],
+                "certificate_id": asset["certificate_id"],
+                "similarity"    : sim,
+            })
+
+    # Sort best match first, return top 5 only
+    matches.sort(key=lambda x: x["similarity"], reverse=True)
+    return {
+        "matches"        : matches[:5],
+        "total_searched" : len(all_assets),
+    }

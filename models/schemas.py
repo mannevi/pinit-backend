@@ -138,3 +138,10 @@ class AuditLogResponse(BaseModel):
     details:    Optional[dict]
     ip_address: Optional[str]
     created_at: str
+
+
+# ─── Visual Search ────────────────────────────────────────────────────────────
+
+class VisualSearchRequest(BaseModel):
+    phash:     str
+    threshold: Optional[int] = 30   # minimum similarity % to include in results

@@ -13,8 +13,6 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in .env")
 
 # ── Create clients ─────────────────────────────────────────────────────────────
-# Re-create clients on each request to avoid dropped HTTP/2 connections
-# This is the most reliable fix for httpx.ReadError on Python 3.12+
 
 def _make_client(key: str) -> Client:
     return create_client(SUPABASE_URL, key)

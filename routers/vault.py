@@ -154,7 +154,6 @@ async def visual_search(
 
     db = get_admin_db()
 
-    # Fetch only the fields we need — no thumbnails in the query to keep it fast
     result = db.table("vault_images").select(
         "asset_id, visual_fingerprint, user_id, owner_name, owner_email, "
         "thumbnail_url, created_at, resolution, file_hash, certificate_id"

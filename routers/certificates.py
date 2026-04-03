@@ -80,7 +80,7 @@ async def share_certificate(data: dict, current_user=Depends(get_current_user)):
             "user_id"           : current_user["id"],
             "owner_email"       : data.get("ownerEmail") or current_user.get("email"),
             "confidence"        : data.get("confidence"),
-            "status"            : data.get("status"),
+             "status"            : "Verified",
             "date_created"      : data.get("dateCreated"),
             "ownership_data"    : data.get("ownershipAtCreation", {}),
             "technical_details" : data.get("technicalDetails", {}),

@@ -78,7 +78,7 @@ async def create_share_link(
     )
 
     # Build the public URL — points to your React app's SharedImagePage route
-    share_url = f"https://image-crypto-analyzer.vercel.app/share/image/{link['token']}"
+    share_url = f"https://pinit-mobile.vercel.app/share/image/{link['token']}"
 
     return {
         "id":         link["id"],
@@ -102,7 +102,7 @@ async def list_share_links(current_user=Depends(get_current_user)):
 
     links = result.data or []
     for link in links:
-        link["share_url"] = f"https://image-crypto-analyzer.vercel.app/share/image/{link['token']}"
+        link["share_url"] = f"https://pinit-mobile.vercel.app/share/image/{link['token']}"
         link["pending_requests"] = [
             r for r in (link.get("download_requests") or [])
             if r["status"] == "pending"

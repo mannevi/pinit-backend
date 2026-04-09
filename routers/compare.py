@@ -22,6 +22,8 @@ async def save_report(
         "is_tampered"           : data.is_tampered,
         "confidence"            : data.confidence,
         "visual_verdict"        : data.visual_verdict,
+        "final_verdict"         : data.final_verdict,
+        "match_tier"            : data.match_tier,
         "editing_tool"          : data.editing_tool,
         "changes"               : data.changes,
         "pixel_analysis"        : data.pixel_analysis,
@@ -30,6 +32,8 @@ async def save_report(
         "uploaded_resolution"   : data.uploaded_resolution,
         "uploaded_size"         : data.uploaded_size,
         "phash_sim"             : data.phash_sim,
+        "phash_calibrated"      : data.phash_calibrated,
+        "hist_sim"              : data.hist_sim,
         "public_token"          : public_token
     }).execute()
 

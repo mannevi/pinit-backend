@@ -8,7 +8,7 @@ import os
 
 load_dotenv()
 
-from routers import auth, vault, compare, admin,certificates
+from routers import auth, vault, compare, admin, certificates, share_links  # ← added share_links
 
 app = FastAPI(
     title       = "PINIT API",
@@ -16,7 +16,6 @@ app = FastAPI(
     version     = "1.0.0"
 )
 
-# CORS — allow React frontend and mobile app to call this backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -33,20 +32,20 @@ app.add_middleware(
     allow_headers     = ["*"]
 )
 
-# Register all routers
-app.include_router(auth.router,    prefix="/auth")
-app.include_router(vault.router,   prefix="/vault")
-app.include_router(compare.router, prefix="/compare")
-app.include_router(admin.router,   prefix="/admin")
+app.include_router(auth.router,         prefix="/auth")
+app.include_router(vault.router,        prefix="/vault")
+app.include_router(compare.router,      prefix="/compare")
+app.include_router(admin.router,        prefix="/admin")
 app.include_router(certificates.router, prefix="/certificates")
+app.include_router(share_links.router,  prefix="/api/share-links")   # ← added
 
 
 @app.get("/")
 def root():
     return {
-        "app"     : "PINIT API",
-        "status"  : "running",
-        "docs"    : "/docs"
+        "app"    : "PINIT API",
+        "status" : "running",
+        "docs"   : "/docs"
     }
 
 

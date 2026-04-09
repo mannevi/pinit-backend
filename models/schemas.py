@@ -96,8 +96,10 @@ class VaultImageResponse(BaseModel):
 class ComparisonReportCreate(BaseModel):
     asset_id:               str
     is_tampered:            Optional[bool]  = False
-    confidence:             Optional[int]   = 0     # always int
-    visual_verdict:         Optional[str]   = None
+    confidence:             Optional[int]   = 0     # always int — overall similarity %
+    visual_verdict:         Optional[str]   = None  # legacy 3-tier label
+    final_verdict:          Optional[str]   = None  # 5-tier: EXACT MATCH / STRONG MATCH / PARTIAL MATCH / WEAK SIMILARITY / NO MATCH
+    match_tier:             Optional[str]   = None  # tier key: exact / strong / partial / weak / none
     editing_tool:           Optional[str]   = None
     changes:                Optional[List[Any]] = []
     pixel_analysis:         Optional[dict]  = {}
@@ -105,7 +107,9 @@ class ComparisonReportCreate(BaseModel):
     modified_file_time:     Optional[str]   = None
     uploaded_resolution:    Optional[str]   = None
     uploaded_size:          Optional[str]   = None
-    phash_sim:              Optional[int]   = None
+    phash_sim:              Optional[int]   = None  # raw pHash Hamming similarity (0–100)
+    phash_calibrated:       Optional[int]   = None  # calibrated pHash (floor-removed, 0–100)
+    hist_sim:               Optional[int]   = None  # histogram Bhattacharyya similarity (0–100)
 
 
 class ComparisonReportResponse(BaseModel):
@@ -115,12 +119,16 @@ class ComparisonReportResponse(BaseModel):
     is_tampered:        bool
     confidence:         int
     visual_verdict:     Optional[str]
+    final_verdict:      Optional[str]
+    match_tier:         Optional[str]
     editing_tool:       Optional[str]
     changes:            Optional[List[Any]]
     pixel_analysis:     Optional[dict]
     uploaded_resolution:Optional[str]
     uploaded_size:      Optional[str]
     phash_sim:          Optional[int]
+    phash_calibrated:   Optional[int]
+    hist_sim:           Optional[int]
     public_token:       Optional[str]
     created_at:         str
 

@@ -87,6 +87,31 @@ async def verify_by_hash(file_hash: str):
     }
 
 
+@router.get("/by-user/{user_id}")
+async def get_vault_by_user(user_id: str, current_user=Depends(get_current_user)):
+    """
+    Look up vault records by the embedded UUID (the owner's account user_id).
+    Used during image analysis — the analyzing user may differ from the owner.
+    Returns the most recent vault record for that UUID, or 404 if none found.
+    Uses admin db so any authenticated user can look up any owner's record.
+    """
+    db     = get_admin_db()
+    result = db.table("vault_images") \
+        .select("*") \
+        .eq("user_id", user_id) \
+        .order("created_at", desc=True) \
+        .limit(1) \
+        .execute()
+
+    if not result.data:
+        raise HTTPException(
+            status_code = 404,
+            detail      = "No vault record found for this UUID"
+        )
+
+    return result.data[0]
+
+
 @router.get("/{asset_id}")
 async def get_vault_image(asset_id: str, current_user=Depends(get_current_user)):
     db     = get_admin_db()

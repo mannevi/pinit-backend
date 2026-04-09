@@ -20,6 +20,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://image-crypto-analyzer.vercel.app",
+         "https://pinit-mobile.vercel.app", 
         "capacitor://localhost",
         "http://localhost",
         "http://localhost:3000",

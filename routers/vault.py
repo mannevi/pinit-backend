@@ -15,12 +15,15 @@ async def save_vault_image(
 ):
     db = get_admin_db()
 
-    # Check if asset_id already exists
+    # ✅ FIXED: check per user, not globally
     existing = db.table("vault_images").select("id") \
-        .eq("asset_id", data.asset_id).execute()
-    if existing.data:
-        raise HTTPException(status_code=400, detail="Asset already in vault")
+        .eq("asset_id", data.asset_id) \
+        .eq("user_id", current_user["id"]) \
+        .execute()
 
+    # ✅ FIXED: return success silently instead of throwing error
+    if existing.data:
+        return {"message": "Already in vault", "data": existing.data[0]}
     # Upload thumbnail to Cloudinary if provided
     thumbnail_url = None
     if data.thumbnail_base64:

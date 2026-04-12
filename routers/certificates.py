@@ -74,16 +74,19 @@ async def share_certificate(data: dict, current_user=Depends(get_current_user)):
         if existing.data:
             return {"message": "Already shared", "id": existing.data[0]["id"]}
 
+
+
         result = db.table("shared_certificates").insert({
             "certificate_id"    : certificate_id,
             "asset_id"          : data.get("assetId"),
             "user_id"           : current_user["id"],
             "owner_email"       : data.get("ownerEmail") or current_user.get("email"),
             "confidence"        : data.get("confidence"),
-             "status"            : "Verified",
+            "status"            : "Verified",
             "date_created"      : data.get("dateCreated"),
             "ownership_data"    : data.get("ownershipAtCreation", {}),
             "technical_details" : data.get("technicalDetails", {}),
+            "analysis_data"     : data.get("analysis_data", {}),
             "image_preview"     : data.get("imagePreview"),
         }).execute()
 
@@ -116,6 +119,7 @@ async def get_public_certificate(certificate_id: str):
             "dateCreated"        : row["date_created"],
             "ownershipAtCreation": row["ownership_data"],
             "technicalDetails"   : row["technical_details"],
+            "analysis_data"      : row.get("analysis_data", {}),
             "imagePreview"       : row["image_preview"],
         }
     except HTTPException:

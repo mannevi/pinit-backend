@@ -1,74 +1,86 @@
 <div align="center">
 
-<img src="images/logo.png" alt="PINIT Logo" width="100" height="100">
+<img src="logo.png" alt="PINIT" width="300">
 
 # PINIT — Backend API
 
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
 [![Render](https://img.shields.io/badge/Deployed_on-Render-46E3B7?style=flat-square&logo=render&logoColor=white)](https://pinit-backend.onrender.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-**[Live API](https://pinit-backend.onrender.com)** · **[API Docs](https://pinit-backend.onrender.com/docs)** · **[Admin Panel](https://image-crypto-analyzer.vercel.app)** · **[Mobile App](https://pinit-mobile.vercel.app)**
+**[Live API](https://pinit-backend.onrender.com)** | **[API Docs](https://pinit-backend.onrender.com/docs)** | **[Admin Panel](https://image-crypto-analyzer.vercel.app)** | **[Mobile App](https://pinit-mobile.vercel.app)**
 
 </div>
 
 ---
 
-> PINIT embeds a unique UUID invisibly into every pixel of an image at the point of capture — creating a tamper-evident cryptographic fingerprint. Any modification made after embedding is detected through forensic comparison, proving both authenticity and ownership. This repository is the shared backend API powering both the PINIT Admin Panel and the PINIT Mobile App.
+PINIT is an **image forensics and ownership verification platform**. It embeds a unique UUID invisibly into every pixel of an image at the point of capture — creating a tamper-evident cryptographic fingerprint that proves both **authenticity and ownership**.
+
+This repository is the **shared backend API** powering both the PINIT Admin Panel and the PINIT Mobile App.
+
+---
+
+## 📰 News
+
+- 🚩 **[2026.04]** PINIT presented to enterprise clients — Admin Panel, Mobile App, and Backend fully operational.
+- 🚩 **[2026.03]** User mobile app extracted into a dedicated repository. Platform now follows a clean 3-repo architecture.
+- 🚩 **[2026.02]** Backend API deployed on Render. Supabase and Cloudinary integrations live.
+- 🚩 **[2026.01]** Initial combined platform launched — Admin Panel and Mobile App sharing a single backend.
+
+---
+
+## 📜 Introduction
+
+PINIT addresses a critical problem in digital media — **proving that an image is authentic and unmodified**. Traditional metadata can be stripped or forged. PINIT solves this through cryptographic pixel-level embedding.
+
+The platform works in two stages:
+
+1. At the point of capture, a **unique UUID is embedded invisibly into the image pixels**, binding the image to the user's identity. This creates a certified asset stored in the vault with a complete metadata record.
+
+2. When authenticity is challenged, a suspect image is submitted for **forensic comparison** against the certified original. The backend runs a multi-signal analysis pipeline — perceptual hashing, histogram analysis, and pixel-level diffing — returning a 5-tier verdict with a calibrated confidence score.
 
 ---
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────┐         ┌──────────────────────┐
-│  Admin Web Panel    │         │   Mobile App (APK)    │
-│  React · Vercel     │         │  React + Capacitor    │
-└────────┬────────────┘         └──────────┬────────────┘
-         │                                 │
-         └──────────────┬──────────────────┘
-                        │  HTTPS / REST
-               ┌────────▼─────────┐
-               │   PINIT Backend   │
-               │  FastAPI · Render │
-               └────────┬─────────┘
-                        │
-           ┌────────────┼────────────┐
-           ▼            ▼            ▼
-      Supabase      Cloudinary    Resend
-    (PostgreSQL)  (Media Store)  (Email OTP)
-```
+![PINIT System Architecture](architecture.png)
 
-### Project Structure
+| Client | Type | Description |
+|---|---|---|
+| Admin Panel | React Web App | Platform management — users, assets, reports, audit logs |
+| Mobile App | React + Capacitor (Android APK) | End-user image certification and forensic comparison |
+
+---
+
+## 🗂️ Project Structure
 
 ```
 pinit-backend/
 │
-├── main.py                    # App entry point, CORS, router registration
+├── main.py                    # App entry point, CORS config, router registration
 ├── requirements.txt           # Python dependencies
-├── runtime.txt                # Python version pin for Render
+├── runtime.txt                # Python version pin for Render deployment
 ├── .env.example               # Environment variable reference
 │
 ├── routers/
-│   ├── auth.py                # Registration, OTP, login, JWT, WebAuthn
+│   ├── auth.py                # Registration, OTP verification, login, JWT, WebAuthn
 │   ├── vault.py               # Certified image asset storage and retrieval
 │   ├── compare.py             # Forensic image comparison and tamper detection
-│   ├── certificates.py        # Certificate generation and verification
-│   ├── share_links.py         # Public share link generation
+│   ├── certificates.py        # Certificate generation and public verification
+│   ├── share_links.py         # Time-limited public share link generation
 │   └── admin.py               # Admin-only endpoints (role-guarded)
 │
 ├── models/
 │   └── schemas.py             # Pydantic v2 request and response models
 │
 ├── db/
-│   └── database.py            # Supabase client setup
+│   └── database.py            # Supabase client initialisation
 │
 ├── utils/
-│   ├── auth_helpers.py        # JWT decode, role enforcement, audit log
-│   ├── cloudinary_helper.py   # Image upload and retrieval
-│   └── email_helper.py        # OTP delivery via Resend
+│   ├── auth_helpers.py        # JWT decode, role enforcement, audit log writer
+│   ├── cloudinary_helper.py   # Image upload and retrieval via Cloudinary
+│   └── email_helper.py        # OTP email delivery
 │
 └── tests/
     ├── test_cloudinary.py
@@ -81,21 +93,19 @@ pinit-backend/
 
 | Router | Prefix | Description |
 |---|---|---|
-| Auth | `/auth` | Registration, OTP verification, login, JWT, WebAuthn passkeys |
+| Auth | `/auth` | Registration, OTP, login, JWT tokens, WebAuthn passkeys |
 | Vault | `/vault` | Store and retrieve certified image assets |
-| Compare | `/compare` | Forensic comparison — pHash, histogram, pixel diff |
+| Compare | `/compare` | Forensic comparison — pHash · histogram · pixel diff |
 | Certificates | `/certificates` | Generate and verify authenticity certificates |
 | Share Links | `/api/share-links` | Create public share tokens for vault assets |
-| Admin | `/admin` | User management, audit log, platform stats *(admin role only)* |
+| Admin | `/admin` | User management, audit log, platform stats *(admin only)* |
 
-### Forensic Comparison — Verdict Tiers
-
-The `/compare` endpoint returns a 5-tier verdict based on multi-signal analysis:
+### Forensic verdict tiers
 
 | Verdict | Description |
 |---|---|
 | `EXACT MATCH` | Image is unmodified — pixel-perfect match |
-| `STRONG MATCH` | Minor compression artefacts only — no tampering detected |
+| `STRONG MATCH` | Minor compression artefacts only — no tampering |
 | `PARTIAL MATCH` | Detectable changes — possible cropping or minor edits |
 | `WEAK SIMILARITY` | Significant differences — likely tampered |
 | `NO MATCH` | Images are unrelated or heavily altered |
@@ -109,7 +119,6 @@ The `/compare` endpoint returns a 5-tier verdict based on multi-signal analysis:
 - Python 3.11+
 - A [Supabase](https://supabase.com) project
 - A [Cloudinary](https://cloudinary.com) account
-- A [Resend](https://resend.com) account for email OTP
 
 ### Installation
 
@@ -147,14 +156,12 @@ cp .env.example .env
 uvicorn main:app --reload
 ```
 
-The API will be running at `http://localhost:8000`  
-Interactive docs available at `http://localhost:8000/docs`
+The API runs at `http://localhost:8000`  
+Interactive docs at `http://localhost:8000/docs`
 
 ---
 
 ## ⚙️ Environment Variables
-
-Copy `.env.example` to `.env` and fill in the following:
 
 | Variable | Description |
 |---|---|
@@ -166,9 +173,7 @@ Copy `.env.example` to `.env` and fill in the following:
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud identifier |
 | `CLOUDINARY_API_KEY` | Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret |
-| `RESEND_API_KEY` | Resend API key for transactional email |
-| `EMAIL_FROM` | Sender address shown in OTP emails |
-| `APP_URL` | Frontend base URL — used in CORS and email links |
+| `APP_URL` | Frontend base URL — used in CORS |
 | `RP_ID` | WebAuthn relying party domain |
 | `RP_NAME` | WebAuthn relying party display name |
 
@@ -185,6 +190,4 @@ Copy `.env.example` to `.env` and fill in the following:
 
 ---
 
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
+© 2026 PINIT. All rights reserved.

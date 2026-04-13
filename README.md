@@ -58,31 +58,31 @@ The platform works in two stages:
 ```
 pinit-backend/
 │
-├── main.py                    # App entry point, CORS config, router registration
-├── requirements.txt           # Python dependencies
-├── runtime.txt                # Python version pin for Render deployment
-├── .env.example               # Environment variable reference
+├── main.py                  # 🚀 FastAPI entry point (init, CORS, router registration)
+├── requirements.txt         # 📦 Dependencies
+├── runtime.txt              # 🐍 Python version (Render deployment)
+├── .env.example             # 🔐 Environment config template
 │
-├── routers/
-│   ├── auth.py                # Registration, OTP verification, login, JWT, WebAuthn
-│   ├── vault.py               # Certified image asset storage and retrieval
-│   ├── compare.py             # Forensic image comparison and tamper detection
-│   ├── certificates.py        # Certificate generation and public verification
-│   ├── share_links.py         # Time-limited public share link generation
-│   └── admin.py               # Admin-only endpoints (role-guarded)
+├── routers/                 # 🌐 API layer (core business logic)
+│   ├── auth.py              # 🔑 Auth (OTP, JWT, WebAuthn)
+│   ├── vault.py             # 🗄️ Image storage & vault management
+│   ├── compare.py           # 🔬 Forensic analysis & tamper detection
+│   ├── certificates.py      # 📜 Certificate generation & verification
+│   ├── share_links.py       # 🔗 Secure share link system
+│   └── admin.py             # 🛡️ Admin operations (role-protected)
 │
-├── models/
-│   └── schemas.py             # Pydantic v2 request and response models
+├── models/                  # 📐 Data layer
+│   └── schemas.py           # 📋 Pydantic request/response models
 │
-├── db/
-│   └── database.py            # Supabase client initialisation
+├── db/                      # 🗃️ Database integration
+│   └── database.py          # 🔌 Supabase client setup
 │
-├── utils/
-│   ├── auth_helpers.py        # JWT decode, role enforcement, audit log writer
-│   ├── cloudinary_helper.py   # Image upload and retrieval via Cloudinary
-│   └── email_helper.py        # OTP email delivery
+├── utils/                   # 🔧 Shared utilities
+│   ├── auth_helpers.py      # 🔒 JWT handling, role checks, audit logs
+│   ├── cloudinary_helper.py # ☁️ Image upload/retrieval (Cloudinary)
+│   └── email_helper.py      # 📧 OTP email service
 │
-└── tests/
+└── tests/                   # 🧪 Testing layer
     ├── test_cloudinary.py
     └── test_connection.py
 ```

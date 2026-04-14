@@ -92,6 +92,37 @@ def upload_thumbnail_base64(base64_str: str, asset_id: str) -> dict:
         }
 
 
+def upload_full_image_base64(base64_str: str, asset_id: str) -> dict:
+    """
+    Upload the full-resolution UUID-embedded image with NO compression or
+    transformation. This is the image the user actually wants to see and
+    download — not a thumbnail. Stored in the same folder as thumbnails so
+    no database schema change is needed; the URL is stored in thumbnail_url.
+    """
+    try:
+        result = cloudinary.uploader.upload(
+            base64_str,
+            public_id     = f"{FOLDER}/{asset_id}",
+            folder        = FOLDER,
+            overwrite     = True,
+            resource_type = "image",
+            # No transformation — store exactly as-is at full quality
+        )
+        return {
+            "success"   : True,
+            "url"       : result["secure_url"],
+            "public_id" : result["public_id"],
+            "width"     : result.get("width"),
+            "height"    : result.get("height"),
+        }
+    except Exception as e:
+        return {
+            "success" : False,
+            "error"   : str(e),
+            "url"     : None
+        }
+
+
 def delete_thumbnail(asset_id: str) -> bool:
     """
     Delete image from Cloudinary when asset is removed from vault.

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from db.database import get_admin_db
 from models.schemas import VaultImageCreate, VaultImageResponse, VisualSearchRequest
 from utils.auth_helpers import get_current_user, log_action
-from utils.cloudinary_helper import upload_thumbnail_base64, delete_thumbnail
+from utils.cloudinary_helper import upload_thumbnail_base64, upload_full_image_base64, delete_thumbnail
 
 router = APIRouter(tags=["Vault"])
 
@@ -24,9 +24,15 @@ async def save_vault_image(
     # ✅ FIXED: return success silently instead of throwing error
     if existing.data:
         return {"message": "Already in vault", "data": existing.data[0]}
-    # Upload thumbnail to Cloudinary if provided
+    # Upload to Cloudinary — prefer full image (no compression), fall back to thumbnail
     thumbnail_url = None
-    if data.thumbnail_base64:
+    if data.full_image_base64:
+        # Full UUID-embedded image — upload at full quality, no transformation
+        result = upload_full_image_base64(data.full_image_base64, data.asset_id)
+        if result["success"]:
+            thumbnail_url = result["url"]
+    if not thumbnail_url and data.thumbnail_base64:
+        # Fall back to compressed thumbnail if full image not provided or upload failed
         result = upload_thumbnail_base64(data.thumbnail_base64, data.asset_id)
         if result["success"]:
             thumbnail_url = result["url"]

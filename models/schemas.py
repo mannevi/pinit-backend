@@ -67,9 +67,10 @@ class VaultImageCreate(BaseModel):
     visual_fingerprint: Optional[str]   = None
     blockchain_anchor:  Optional[str]   = None
     resolution:         Optional[str]   = None
-    file_size:          Optional[str]   = None   # string e.g. "2.5 MB"
+    file_size:          Optional[str]   = None
     file_name:          Optional[str]   = None
     thumbnail_base64:   Optional[str]   = None
+    full_image_base64:  Optional[str]   = None   # full-res UUID-embedded image
     capture_timestamp:  Optional[str]   = None
     device_id:          Optional[str]   = None
 

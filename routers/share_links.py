@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 
 from db.database import get_admin_db
 from utils.auth_helpers import get_current_user, log_action
+from utils.cloudinary_helper import upload_share_image_base64
 
 router = APIRouter(tags=["Share Links"])
 
@@ -16,10 +17,11 @@ EXPIRY_MAP = {
 }
 
 class CreateShareLinkRequest(BaseModel):
-    asset_id:         str
-    permission:       str
-    expires_in:       str
-    require_approval: bool = True
+    asset_id:          str
+    permission:        str
+    expires_in:        str
+    require_approval:  bool = True
+    full_image_base64: Optional[str] = None  # full-res image sent from mobile app
 
 class DownloadRequestBody(BaseModel):
     recipient_name:  str
@@ -59,10 +61,18 @@ async def create_share_link(
     log_action(current_user["id"], "share_link_created",
         {"asset_id": data.asset_id, "token": link["token"]}, str(request.client.host))
 
+    # Upload full-resolution image to Cloudinary if provided
+    share_image_url = None
+    if data.full_image_base64:
+        upload_result = upload_share_image_base64(data.full_image_base64, link["token"])
+        if upload_result["success"]:
+            share_image_url = upload_result["url"]
+
     share_url = f"https://pinit-mobile.vercel.app/share/image/{link['token']}"
     return {
         "id": link["id"], "token": link["token"], "url": share_url,
-        "permission": link["permission"], "expires_at": link["expires_at"], "status": link["status"],
+        "permission": link["permission"], "expires_at": link["expires_at"],
+        "status": link["status"], "share_image_url": share_image_url,
     }
 
 
@@ -146,14 +156,27 @@ async def get_share_link_public(token: str, request: Request):
         if vault_result.data:
             asset = vault_result.data[0]
 
+    # Build the full-resolution share image URL from Cloudinary using the token
+    import os
+    share_folder    = os.getenv("CLOUDINARY_SHARE_FOLDER", "pinit-share-images")
+    cloud_name      = os.getenv("CLOUDINARY_CLOUD_NAME", "")
+    share_image_url = (
+        f"https://res.cloudinary.com/{cloud_name}/image/upload/{share_folder}/{token}"
+        if cloud_name else None
+    )
+
     return {
         "status": link["status"], "permission": link["permission"],
         "require_approval": link["require_approval"], "expires_at": link["expires_at"],
         "asset": {
-            "asset_id": asset.get("asset_id"), "file_name": asset.get("file_name"),
-            "file_size": asset.get("file_size"), "resolution": asset.get("resolution"),
-            "thumbnail_url": asset.get("thumbnail_url"), "owner_name": asset.get("owner_name"),
-            "registered": asset.get("created_at"),
+            "asset_id":       asset.get("asset_id"),
+            "file_name":      asset.get("file_name"),
+            "file_size":      asset.get("file_size"),
+            "resolution":     asset.get("resolution"),
+            "thumbnail_url":  asset.get("thumbnail_url"),
+            "share_image_url": share_image_url,   # full-res image for display
+            "owner_name":     asset.get("owner_name"),
+            "registered":     asset.get("created_at"),
         }
     }
 

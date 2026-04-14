@@ -167,3 +167,34 @@ def get_original_url(asset_id: str) -> str:
     return cloudinary.CloudinaryImage(
         f"{ORIGINAL_FOLDER}/{asset_id}"
     ).build_url(secure=True)
+
+
+SHARE_FOLDER = os.getenv("CLOUDINARY_SHARE_FOLDER", "pinit-share-images")
+
+
+def upload_share_image_base64(base64_str: str, token: str) -> dict:
+    """
+    Upload the full-resolution share image to Cloudinary with NO compression.
+    Keyed by share token so each share link has its own image.
+    Returns { success, url, public_id }
+    """
+    try:
+        result = cloudinary.uploader.upload(
+            base64_str,
+            public_id     = f"{SHARE_FOLDER}/{token}",
+            folder        = SHARE_FOLDER,
+            overwrite     = True,
+            resource_type = "image",
+            # No transformation — store exactly as-is for full quality
+        )
+        return {
+            "success"   : True,
+            "url"       : result["secure_url"],
+            "public_id" : result["public_id"],
+        }
+    except Exception as e:
+        return {
+            "success" : False,
+            "error"   : str(e),
+            "url"     : None,
+        }

@@ -157,13 +157,8 @@ async def get_share_link_public(token: str, request: Request):
             asset = vault_result.data[0]
 
     # Build the full-resolution share image URL from Cloudinary using the token
-    import os
-    share_folder    = os.getenv("CLOUDINARY_SHARE_FOLDER", "pinit-share-images")
-    cloud_name      = os.getenv("CLOUDINARY_CLOUD_NAME", "")
-    share_image_url = (
-        f"https://res.cloudinary.com/{cloud_name}/image/upload/{share_folder}/{token}"
-        if cloud_name else None
-    )
+    share_image_url = None
+
 
     return {
         "status": link["status"], "permission": link["permission"],
